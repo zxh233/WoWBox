@@ -12,3 +12,4 @@ out/
 app/src/main/assets/**/*.tzst
 app/src/main/assets/*.tzst
 app/src/main/assets/*.txz
+.idea

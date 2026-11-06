@@ -89,10 +89,10 @@
     },
     {
       "type": "gpu-driver-stack",
-      "source": "asset://graphics_driver/adrenotools-turnip26.1.5-frontmage-ir3-nonstrict-ebad131-abc97b08.tzst",
+      "source": "asset://graphics_driver/adrenotools-turnip26.1.5-frontmage-ir3-nonstrict-ebad131-ca0ff2a9.tzst",
       "archive": "tzst",
-      "checksum": "abc97b08fb3de2d54655e3493b34ff5a5a4f061878eeca88d657103581803c5a",
-      "target": "turnip26.1.5-frontmage-ir3-nonstrict-ebad131-abc97b08",
+      "checksum": "ca0ff2a9165e81abe2de607b041f2365651ec1e667e303209258451123a4cba3",
+      "target": "turnip26.1.5-frontmage-ir3-nonstrict-ebad131-ca0ff2a9",
       "replacePolicy": "preserve"
     },
     {
@@ -138,9 +138,9 @@
     "turnipCandidates": [
       {
         "version": "26.1.5-frontmage-ir3-nonstrict",
-        "source": "asset://graphics_driver/adrenotools-turnip26.1.5-frontmage-ir3-nonstrict-ebad131-abc97b08.tzst",
-        "checksum": "abc97b08fb3de2d54655e3493b34ff5a5a4f061878eeca88d657103581803c5a",
-        "driverId": "turnip26.1.5-frontmage-ir3-nonstrict-ebad131-abc97b08"
+        "source": "asset://graphics_driver/adrenotools-turnip26.1.5-frontmage-ir3-nonstrict-ebad131-ca0ff2a9.tzst",
+        "checksum": "ca0ff2a9165e81abe2de607b041f2365651ec1e667e303209258451123a4cba3",
+        "driverId": "turnip26.1.5-frontmage-ir3-nonstrict-ebad131-ca0ff2a9"
       },
       {
         "version": "25.3.6-vanilla-armnative",

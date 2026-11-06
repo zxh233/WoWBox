@@ -9,7 +9,7 @@
   "files": [
     {
       "path": "app/src/main/assets/box_spec.json",
-      "sha256": "ff5512e83cdd70ab8ed0a6e97f3ba5cbf6b91a35d7bea977ae7bdc476cc0d589",
+      "sha256": "3fcbeeb6ea91723bcc454140fc0e9ab70eb69ca02f00f3a0e59de418867c4a42",
       "sizeBytes": 9877,
       "mode": 420
     },
@@ -98,9 +98,9 @@
       "mode": 420
     },
     {
-      "path": "app/src/main/assets/graphics_driver/adrenotools-turnip26.1.5-frontmage-ir3-nonstrict-ebad131-abc97b08.tzst",
-      "sha256": "abc97b08fb3de2d54655e3493b34ff5a5a4f061878eeca88d657103581803c5a",
-      "sizeBytes": 2147343,
+      "path": "app/src/main/assets/graphics_driver/adrenotools-turnip26.1.5-frontmage-ir3-nonstrict-ebad131-ca0ff2a9.tzst",
+      "sha256": "ca0ff2a9165e81abe2de607b041f2365651ec1e667e303209258451123a4cba3",
+      "sizeBytes": 2245838,
       "mode": 420
     },
     {
@@ -315,7 +315,7 @@
     },
     {
       "path": "app/src/main/assets/managed_assets.json",
-      "sha256": "9e08e2851d334afb4d92a7f603d59d91c5700e397607c211de76f9f9d00a27a7",
+      "sha256": "d7aeab23273806a5a8134acbe99e8e0d4b62302515ca516efbdb3353c7ad21ae",
       "sizeBytes": 10246,
       "mode": 420
     },
