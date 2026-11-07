@@ -260,6 +260,7 @@
     <string name="box86_64_env_var_help__dynarec_callret">Optimization of CALL/RET opcodes</string>
     <string name="box86_64_env_var_help__dynarec_wait">Defines whether or not Dynarec will wait for the FillBlock to be ready</string>
     <string name="columns">Columns</string>
+    <string name="enable_range_scroll">Enable scrolling</string>
     <string name="directinput_mapper_type">DirectInput Mapper Type</string>
     <string name="desktop">Desktop</string>
     <string name="theme">Theme</string>

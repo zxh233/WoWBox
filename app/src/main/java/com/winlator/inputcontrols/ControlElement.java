@@ -30,6 +30,7 @@ public class ControlElement {
     public static final float TRACKPAD_MAX_SPEED = 20.0f;
     public static final byte TRACKPAD_ACCELERATION_THRESHOLD = 4;
     public static final short BUTTON_MIN_TIME_TO_KEEP_PRESSED = 300;
+    public static final int MAX_RANGE_BUTTON_COUNT = 12;
     public enum Type {
         BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD;
 
@@ -89,6 +90,7 @@ public class ControlElement {
     private byte iconId;
     private Range range;
     private byte orientation;
+    private boolean scrollable = true;
     private PointF currentPosition;
     private RangeScroller scroller;
     private CubicBezierInterpolator interpolator;
@@ -159,6 +161,24 @@ public class ControlElement {
 
     public void setRange(Range range) {
         this.range = range;
+        applyRangeButtonLimits();
+    }
+
+    public boolean isScrollable() {
+        return scrollable;
+    }
+
+    public void setScrollable(boolean scrollable) {
+        this.scrollable = scrollable;
+        applyRangeButtonLimits();
+    }
+
+    public void applyRangeButtonLimits() {
+        if (type != Type.RANGE_BUTTON) return;
+        int max = MAX_RANGE_BUTTON_COUNT;
+        if (!scrollable) max = Math.min(max, getRange().max & 0xff);
+        if (getBindingCount() > max) setBindingCount(max);
+        if (!scrollable && scroller != null) scroller.resetScroll();
     }
 
     public byte getOrientation() {
@@ -495,11 +515,12 @@ public class ControlElement {
                     startY -= scrollOffset % elementSize;
 
                     for (byte i = rangeIndex[0]; i < rangeIndex[1]; i++) {
+                        int index = i % range.max;
                         paint.setStyle(Paint.Style.STROKE);
                         paint.setColor(oldColor);
 
                         if (startY > boundingBox.top && startY < boundingBox.bottom) canvas.drawLine(lineLeft, startY, lineRight, startY, paint);
-                        String text = getRangeTextForIndex(range, i);
+                        String text = getRangeTextForIndex(range, index);
 
                         if (startY < boundingBox.bottom && startY + elementSize > boundingBox.top) {
                             paint.setStyle(Paint.Style.FILL);
@@ -580,9 +601,10 @@ public class ControlElement {
             elementJSONObject.put("text", text);
             elementJSONObject.put("iconId", iconId);
 
-            if (type == Type.RANGE_BUTTON && range != null) {
-                elementJSONObject.put("range", range.name());
+            if (type == Type.RANGE_BUTTON) {
+                if (range != null) elementJSONObject.put("range", range.name());
                 if (orientation != 0) elementJSONObject.put("orientation", orientation);
+                elementJSONObject.put("scrollable", scrollable);
             }
             return elementJSONObject;
         }

@@ -106,22 +106,45 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             loadBindingSpinners(element, view);
         };
 
-        loadTypeSpinner(element, view.findViewById(R.id.SType), updateLayout);
+        NumberPicker npColumns = view.findViewById(R.id.NPColumns);
+        final Runnable updateRangeColumns = () -> {
+            int maxColumns = ControlElement.MAX_RANGE_BUTTON_COUNT;
+            if (!element.isScrollable()) {
+                maxColumns = Math.min(maxColumns, element.getRange().max & 0xff);
+            }
+            npColumns.setMaxValue(maxColumns);
+            if (element.getBindingCount() > maxColumns) {
+                element.setBindingCount(maxColumns);
+                profile.save();
+            }
+            npColumns.setValue(element.getBindingCount());
+        };
+        npColumns.setOnValueChangeListener((numberPicker, value) -> {
+            element.setBindingCount(value);
+            profile.save();
+            inputControlsView.invalidate();
+        });
+
+        CheckBox cbRangeScroll = view.findViewById(R.id.CBRangeScroll);
+        cbRangeScroll.setChecked(element.isScrollable());
+        cbRangeScroll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            element.setScrollable(isChecked);
+            profile.save();
+            updateRangeColumns.run();
+            inputControlsView.invalidate();
+        });
+
+        loadTypeSpinner(element, view.findViewById(R.id.SType), () -> {
+            updateLayout.run();
+            updateRangeColumns.run();
+        });
         loadShapeSpinner(element, view.findViewById(R.id.SShape));
-        loadRangeSpinner(element, view.findViewById(R.id.SRange));
+        loadRangeSpinner(element, view.findViewById(R.id.SRange), updateRangeColumns);
 
         RadioGroup rgOrientation = view.findViewById(R.id.RGOrientation);
         rgOrientation.check(element.getOrientation() == 1 ? R.id.RBVertical : R.id.RBHorizontal);
         rgOrientation.setOnCheckedChangeListener((group, checkedId) -> {
             element.setOrientation((byte)(checkedId == R.id.RBVertical ? 1 : 0));
-            profile.save();
-            inputControlsView.invalidate();
-        });
-
-        NumberPicker npColumns = view.findViewById(R.id.NPColumns);
-        npColumns.setValue(element.getBindingCount());
-        npColumns.setOnValueChangeListener((numberPicker, value) -> {
-            element.setBindingCount(value);
             profile.save();
             inputControlsView.invalidate();
         });
@@ -162,6 +185,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         loadIcons(llIconList, element.getIconId());
 
         updateLayout.run();
+        updateRangeColumns.run();
 
         PopupWindow popupWindow = AppUtils.showPopupWindow(anchorView, view, 340, 0);
         popupWindow.setOnDismissListener(() -> {
@@ -307,15 +331,19 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         container.addView(view);
     }
 
-    private void loadRangeSpinner(final ControlElement element, Spinner spinner) {
+    private void loadRangeSpinner(final ControlElement element, Spinner spinner, Runnable onRangeChanged) {
         spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, ControlElement.Range.names(this)));
         spinner.setSelection(element.getRange().ordinal(), false);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                element.setRange(ControlElement.Range.values()[position]);
-                profile.save();
-                inputControlsView.invalidate();
+                ControlElement.Range selectedRange = ControlElement.Range.values()[position];
+                if (selectedRange != element.getRange()) {
+                    element.setRange(selectedRange);
+                    profile.save();
+                    inputControlsView.invalidate();
+                }
+                if (onRangeChanged != null) onRangeChanged.run();
             }
 
             @Override

@@ -29,7 +29,18 @@ public class RangeScroller {
 
     public float getElementSize() {
         Rect boundingBox = element.getBoundingBox();
-        return (float)Math.max(boundingBox.width(), boundingBox.height()) / element.getBindingCount();
+        return (float)Math.max(boundingBox.width(), boundingBox.height()) / getSlotCount();
+    }
+
+    private int getSlotCount() {
+        int count = element.getBindingCount();
+        if (!element.isScrollable()) count = Math.min(count, element.getRange().max & 0xff);
+        return Math.max(count, 1);
+    }
+
+    public void resetScroll() {
+        scrollOffset = 0;
+        currentOffset = 0;
     }
 
     public float getScrollSize() {
@@ -37,10 +48,12 @@ public class RangeScroller {
     }
 
     public float getScrollOffset() {
-        return scrollOffset;
+        return element.isScrollable() ? scrollOffset : 0;
     }
 
     public byte[] getRangeIndex() {
+        if (!element.isScrollable()) return new byte[]{0, (byte)getSlotCount()};
+
         ControlElement.Range range = element.getRange();
         byte from = (byte)Math.floor((scrollOffset / getElementSize()) % range.max);
         if (from < 0) from = (byte)(range.max + from);
@@ -51,9 +64,16 @@ public class RangeScroller {
     private Binding getBindingByPosition(float x, float y) {
         Rect boundingBox = element.getBoundingBox();
         ControlElement.Range range = element.getRange();
-        float offset = element.getOrientation() == 0 ? x - boundingBox.left - currentOffset : y - boundingBox.top - currentOffset;
-        int index = (int)Math.floor((offset / getElementSize()) % range.max);
-        if (index < 0) index = range.max + index;
+        float offset = element.getOrientation() == 0 ? x - boundingBox.left : y - boundingBox.top;
+        if (element.isScrollable()) offset -= currentOffset;
+        int index = (int)Math.floor(offset / getElementSize());
+        if (!element.isScrollable()) {
+            if (index < 0 || index >= getSlotCount()) return Binding.NONE;
+        }
+        else {
+            index %= range.max;
+            if (index < 0) index += range.max;
+        }
 
         switch (range) {
             case FROM_A_TO_Z:
@@ -89,6 +109,11 @@ public class RangeScroller {
         touchTime = System.currentTimeMillis();
         lastPosition = element.getOrientation() == 0 ? x : y;
         element.setBinding(Binding.NONE);
+        if (!element.isScrollable()) {
+            setBindingPressed(true);
+            return;
+        }
+
         final long touchGeneration = generation;
 
         timer = new Timer(true);
@@ -103,6 +128,7 @@ public class RangeScroller {
     }
 
     public void handleTouchMove(float x, float y) {
+        if (!element.isScrollable()) return;
         if (isActionDown) {
             float position = element.getOrientation() == 0 ? x : y;
             float deltaPosition = position - lastPosition;
@@ -128,6 +154,11 @@ public class RangeScroller {
     public void handleTouchUp() {
         if (isActionDown) {
             destroyTimer();
+            if (!element.isScrollable()) {
+                setBindingPressed(false);
+                isActionDown = false;
+                return;
+            }
             final long releaseGeneration = ++generation;
             if (isTap() && !scrolling) {
                 setBindingPressed(true);

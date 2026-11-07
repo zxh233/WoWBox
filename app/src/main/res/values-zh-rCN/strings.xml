@@ -260,6 +260,7 @@
     <string name="box86_64_env_var_help__dynarec_callret">优化 CALL/RET 指令</string>
     <string name="box86_64_env_var_help__dynarec_wait">动态重编译是否等待 FillBlock 准备完成</string>
     <string name="columns">列数</string>
+    <string name="enable_range_scroll">允许滚动</string>
     <string name="directinput_mapper_type">DirectInput 映射类型</string>
     <string name="desktop">桌面</string>
     <string name="theme">主题</string>

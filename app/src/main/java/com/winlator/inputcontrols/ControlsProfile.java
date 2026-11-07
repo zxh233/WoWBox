@@ -250,11 +250,13 @@ public class ControlsProfile implements Comparable<ControlsProfile> {
                 element.setIconId(elementJSONObject.getInt("iconId"));
                 if (elementJSONObject.has("range")) element.setRange(ControlElement.Range.valueOf(elementJSONObject.getString("range")));
                 if (elementJSONObject.has("orientation")) element.setOrientation((byte)elementJSONObject.getInt("orientation"));
+                if (elementJSONObject.has("scrollable")) element.setScrollable(elementJSONObject.getBoolean("scrollable"));
 
                 Binding[] bindings = readBindings(elementJSONObject.getJSONArray("bindings"));
                 for (int j = 0; j < bindings.length; j++) {
                     element.setBindingAt(j, bindings[j]);
                 }
+                element.applyRangeButtonLimits();
 
                 if (isVirtualGamepadElement(bindings)) loadedVirtualGamepad = true;
                 elements.add(element);

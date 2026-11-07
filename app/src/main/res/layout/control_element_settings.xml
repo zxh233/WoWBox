@@ -101,6 +101,12 @@
                     android:text="@string/vertical" />
             </RadioGroup>
 
+            <CheckBox
+                android:id="@+id/CBRangeScroll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/enable_range_scroll" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -111,7 +117,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:minValue="3"
-                app:maxValue="8" />
+                app:maxValue="12" />
         </LinearLayout>
 
         <LinearLayout
