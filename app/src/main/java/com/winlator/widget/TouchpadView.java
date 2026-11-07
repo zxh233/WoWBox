@@ -224,25 +224,16 @@ public class TouchpadView extends View {
         }
 
         switch (actionMasked) {
-            case MotionEvent.ACTION_DOWN: {
-                float[] transformedPoint = XForm.transformPoint(xform, event.getX(actionIndex), event.getY(actionIndex));
-                tapDragPointerId = pointerId;
-                tapDragSecondPointerId = -1;
-                tapDragDownX = (int) transformedPoint[0];
-                tapDragDownY = (int) transformedPoint[1];
-                tapDragLastX = tapDragDownX;
-                tapDragLastY = tapDragDownY;
-                tapDragDownTimeMs = System.currentTimeMillis();
-                tapDragRightDragActive = false;
-                tapDragLeftDragActive = false;
-                resetTwoFingerState();
-                touchGestureModifierState.beginTouch();
-                if (ICP_DEBUG_LOG) {
-                    Log.i(TAG_ICP, "DOWN set p1=" + tapDragPointerId + " x=" + tapDragDownX + " y=" + tapDragDownY);
-                }
+            case MotionEvent.ACTION_DOWN:
+                startTapDragPointer(pointerId, event.getX(actionIndex), event.getY(actionIndex));
                 break;
-            }
             case MotionEvent.ACTION_POINTER_DOWN:
+                if (tapDragPointerId == -1) {
+                    // Another finger is already holding a virtual control, so this
+                    // contact arrives as POINTER_DOWN instead of DOWN.
+                    startTapDragPointer(pointerId, event.getX(actionIndex), event.getY(actionIndex));
+                    break;
+                }
                 if (tapDragSecondPointerId == -1 && tapDragPointerId != -1) {
                     tapDragSecondPointerId = pointerId;
                     int firstIndex = event.findPointerIndex(tapDragPointerId);
@@ -533,6 +524,24 @@ public class TouchpadView extends View {
         tapDragRightDragActive = false;
         touchGestureModifierState.clear();
         resetTwoFingerState();
+    }
+
+    private void startTapDragPointer(int pointerId, float x, float y) {
+        float[] transformedPoint = XForm.transformPoint(xform, x, y);
+        tapDragPointerId = pointerId;
+        tapDragSecondPointerId = -1;
+        tapDragDownX = (int) transformedPoint[0];
+        tapDragDownY = (int) transformedPoint[1];
+        tapDragLastX = tapDragDownX;
+        tapDragLastY = tapDragDownY;
+        tapDragDownTimeMs = System.currentTimeMillis();
+        tapDragRightDragActive = false;
+        tapDragLeftDragActive = false;
+        resetTwoFingerState();
+        touchGestureModifierState.beginTouch();
+        if (ICP_DEBUG_LOG) {
+            Log.i(TAG_ICP, "DOWN set p1=" + tapDragPointerId + " x=" + tapDragDownX + " y=" + tapDragDownY);
+        }
     }
 
     private void resetTwoFingerState() {

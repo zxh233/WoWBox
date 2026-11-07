@@ -624,6 +624,7 @@ public class ControlElement {
     }
 
     public boolean handleTouchMove(int pointerId, float x, float y) {
+        if (pointerId == currentPointerId && type == Type.BUTTON) return true;
         if (pointerId == currentPointerId && (type == Type.D_PAD || type == Type.STICK || type == Type.TRACKPAD)) {
             float deltaX, deltaY;
             Rect boundingBox = getBoundingBox();
