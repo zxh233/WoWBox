@@ -51,8 +51,11 @@ public class StringUtils {
     }
 
     public static String formatBytes(long bytes, boolean withSuffix) {
-        if (bytes <= 0) return "0 bytes";
-        final String[] units = new String[]{"bytes", "KB", "MB", "GB", "TB"};
+        boolean chinese = Locale.getDefault().getLanguage().equals("zh");
+        if (bytes <= 0) return chinese ? "0 字节" : "0 bytes";
+        final String[] units = chinese
+                ? new String[]{"字节", "KB", "MB", "GB", "TB"}
+                : new String[]{"bytes", "KB", "MB", "GB", "TB"};
         int digitGroups = (int)(Math.log10(bytes) / Math.log10(1024));
         String suffix = withSuffix ? " "+units[digitGroups] : "";
         return String.format(Locale.ENGLISH, "%.2f", bytes / Math.pow(1024, digitGroups))+suffix;

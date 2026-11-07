@@ -326,13 +326,12 @@ public class InputControlsFragment extends Fragment {
 
         if (!controllers.isEmpty()) {
             view.findViewById(R.id.TVEmptyText).setVisibility(View.GONE);
-            String bindingsText = context.getString(R.string.bindings);
             for (final ExternalController controller : controllers) {
                 View itemView = inflater.inflate(R.layout.external_controller_list_item, container, false);
                 ((TextView)itemView.findViewById(R.id.TVTitle)).setText(controller.getName());
 
                 int controllerBindingCount = controller.getControllerBindingCount();
-                ((TextView)itemView.findViewById(R.id.TVSubtitle)).setText(controllerBindingCount+" "+bindingsText);
+                ((TextView)itemView.findViewById(R.id.TVSubtitle)).setText(context.getString(R.string.binding_count, controllerBindingCount));
 
                 ImageView imageView = itemView.findViewById(R.id.ImageView);
                 int tintColor = controller.isConnected() ? ContextCompat.getColor(context, R.color.colorAccent) : 0xffe57373;

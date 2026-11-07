@@ -55,9 +55,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 public class ContainerDetailFragment extends Fragment {
+    private static final String[] MOUSE_WARP_VALUES = {"disable", "enable", "force"};
+    private static final String[] OFFSCREEN_VALUES = {"backbuffer", "fbo"};
     private ContainerManager manager;
     private final int containerId;
     private Container container;
@@ -282,7 +283,7 @@ public class ContainerDetailFragment extends Fragment {
             catch (JSONException e) {}
 
             Spinner sOffscreenRenderingMode = view.findViewById(R.id.SOffscreenRenderingMode);
-            registryEditor.setStringValue("Software\\Wine\\Direct3D", "OffScreenRenderingMode", sOffscreenRenderingMode.getSelectedItem().toString().toLowerCase(Locale.ENGLISH));
+            registryEditor.setStringValue("Software\\Wine\\Direct3D", "OffScreenRenderingMode", valueAt(OFFSCREEN_VALUES, sOffscreenRenderingMode.getSelectedItemPosition(), "fbo"));
 
             Spinner sStrictShaderMath = view.findViewById(R.id.SStrictShaderMath);
             registryEditor.setDwordValue("Software\\Wine\\Direct3D", "strict_shader_math", sStrictShaderMath.getSelectedItemPosition());
@@ -291,7 +292,7 @@ public class ContainerDetailFragment extends Fragment {
             registryEditor.setStringValue("Software\\Wine\\Direct3D", "VideoMemorySize", StringUtils.parseNumber(sVideoMemorySize.getSelectedItem()));
 
             Spinner sMouseWarpOverride = view.findViewById(R.id.SMouseWarpOverride);
-            registryEditor.setStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", sMouseWarpOverride.getSelectedItem().toString().toLowerCase(Locale.ENGLISH));
+            registryEditor.setStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", valueAt(MOUSE_WARP_VALUES, sMouseWarpOverride.getSelectedItemPosition(), "disable"));
 
             registryEditor.setStringValue("Software\\Wine\\Direct3D", "shader_backend", "glsl");
             registryEditor.setStringValue("Software\\Wine\\Direct3D", "UseGLSL", "enabled");
@@ -341,10 +342,10 @@ public class ContainerDetailFragment extends Fragment {
             Spinner sGPUName = view.findViewById(R.id.SGPUName);
             loadGPUNameSpinner(sGPUName, registryEditor.getDwordValue("Software\\Wine\\Direct3D", "VideoPciDeviceID", 1728));
 
-            List<String> offscreenRenderingModeList = Arrays.asList("Backbuffer", "FBO");
+            List<String> offscreenRenderingModeList = Arrays.asList(context.getString(R.string.offscreen_backbuffer), context.getString(R.string.offscreen_fbo));
             Spinner sOffscreenRenderingMode = view.findViewById(R.id.SOffscreenRenderingMode);
             sOffscreenRenderingMode.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, offscreenRenderingModeList));
-            AppUtils.setSpinnerSelectionFromValue(sOffscreenRenderingMode, registryEditor.getStringValue("Software\\Wine\\Direct3D", "OffScreenRenderingMode", "fbo"));
+            sOffscreenRenderingMode.setSelection(indexOfIgnoreCase(OFFSCREEN_VALUES, registryEditor.getStringValue("Software\\Wine\\Direct3D", "OffScreenRenderingMode", "fbo"), 1), false);
 
             Spinner sStrictShaderMath = view.findViewById(R.id.SStrictShaderMath);
             sStrictShaderMath.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, stateList));
@@ -357,7 +358,7 @@ public class ContainerDetailFragment extends Fragment {
             List<String> mouseWarpOverrideList = Arrays.asList(context.getString(R.string.disable), context.getString(R.string.enable), context.getString(R.string.force));
             Spinner sMouseWarpOverride = view.findViewById(R.id.SMouseWarpOverride);
             sMouseWarpOverride.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, mouseWarpOverrideList));
-            AppUtils.setSpinnerSelectionFromValue(sMouseWarpOverride, registryEditor.getStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", "disable"));
+            sMouseWarpOverride.setSelection(indexOfIgnoreCase(MOUSE_WARP_VALUES, registryEditor.getStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", "disable"), 0), false);
         }
     }
 
@@ -378,10 +379,23 @@ public class ContainerDetailFragment extends Fragment {
         spinner.setSelection(selectedPosition);
     }
 
+    private static int indexOfIgnoreCase(String[] values, String selected, int fallback) {
+        if (selected != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i].equalsIgnoreCase(selected)) return i;
+            }
+        }
+        return fallback;
+    }
+
+    private static String valueAt(String[] values, int index, String fallback) {
+        return index >= 0 && index < values.length ? values[index] : fallback;
+    }
+
     public static String getScreenSize(View view) {
         Spinner sScreenSize = view.findViewById(R.id.SScreenSize);
         String value = sScreenSize.getSelectedItem().toString();
-        if (value.equalsIgnoreCase("custom")) {
+        if (sScreenSize.getSelectedItemPosition() == 0) {
             value = Container.DEFAULT_SCREEN_SIZE;
             String strWidth = ((EditText)view.findViewById(R.id.ETScreenWidth)).getText().toString().trim();
             String strHeight = ((EditText)view.findViewById(R.id.ETScreenHeight)).getText().toString().trim();
@@ -416,8 +430,7 @@ public class ContainerDetailFragment extends Fragment {
         sScreenSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String value = sScreenSize.getItemAtPosition(position).toString();
-                llCustomScreenSize.setVisibility(value.equalsIgnoreCase("custom") ? View.VISIBLE : View.GONE);
+                llCustomScreenSize.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
             }
 
             @Override
@@ -426,7 +439,7 @@ public class ContainerDetailFragment extends Fragment {
 
         boolean found = AppUtils.setSpinnerSelectionFromIdentifier(sScreenSize, selectedValue);
         if (!found) {
-            AppUtils.setSpinnerSelectionFromValue(sScreenSize, "custom");
+            sScreenSize.setSelection(0, false);
             String[] screenSize = selectedValue.split("x");
             ((EditText)view.findViewById(R.id.ETScreenWidth)).setText(screenSize[0]);
             ((EditText)view.findViewById(R.id.ETScreenHeight)).setText(screenSize[1]);

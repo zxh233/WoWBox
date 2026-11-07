@@ -183,7 +183,7 @@ public class ExternalControllerBindingsActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
             final ExternalControllerBinding item = controller.getControllerBindingAt(position);
-            holder.title.setText(item.toString());
+            holder.title.setText(item.listTitle(ExternalControllerBindingsActivity.this));
             loadBindingSpinner(holder, item);
             holder.removeButton.setOnClickListener((view) -> {
                 controller.removeControllerBinding(item);
@@ -205,18 +205,18 @@ public class ExternalControllerBindingsActivity extends AppCompatActivity {
                 String[] bindingEntries = null;
                 switch (holder.bindingType.getSelectedItemPosition()) {
                     case 0:
-                        bindingEntries = Binding.keyboardBindingLabels();
+                        bindingEntries = Binding.keyboardBindingLabels($this);
                         break;
                     case 1:
-                        bindingEntries = Binding.mouseBindingLabels();
+                        bindingEntries = Binding.mouseBindingLabels($this);
                         break;
                     case 2:
-                        bindingEntries = Binding.gamepadBindingLabels();
+                        bindingEntries = Binding.gamepadBindingLabels($this);
                         break;
                 }
 
                 holder.binding.setAdapter(new ArrayAdapter<>($this, android.R.layout.simple_spinner_dropdown_item, bindingEntries));
-                AppUtils.setSpinnerSelectionFromValue(holder.binding, item.getBinding().toString());
+                AppUtils.setSpinnerSelectionFromValue(holder.binding, item.getBinding().listLabel($this));
             };
 
             holder.bindingType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {

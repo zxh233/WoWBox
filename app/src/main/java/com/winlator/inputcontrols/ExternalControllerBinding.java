@@ -1,5 +1,6 @@
 package com.winlator.inputcontrols;
 
+import android.content.Context;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -45,6 +46,21 @@ public class ExternalControllerBinding {
         }
         catch (JSONException e) {
             return null;
+        }
+    }
+
+    public String listTitle(Context context) {
+        if (!Binding.isChinese(context)) return toString();
+        switch (keyCode) {
+            case AXIS_X_NEGATIVE: return "X 轴-";
+            case AXIS_X_POSITIVE: return "X 轴+";
+            case AXIS_Y_NEGATIVE: return "Y 轴-";
+            case AXIS_Y_POSITIVE: return "Y 轴+";
+            case AXIS_Z_NEGATIVE: return "Z 轴-";
+            case AXIS_Z_POSITIVE: return "Z 轴+";
+            case AXIS_RZ_NEGATIVE: return "RZ 轴-";
+            case AXIS_RZ_POSITIVE: return "RZ 轴+";
+            default: return toString();
         }
     }
 

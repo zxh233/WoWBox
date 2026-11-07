@@ -136,7 +136,7 @@ public class BoxLauncherFragment extends Fragment {
 
         ArrayList<LaunchItem> items = new ArrayList<>();
         for (BoxSpec.Target target : runtime.getVisibleLaunchTargets()) {
-            String title = target.label == null || target.label.isEmpty() ? target.id : target.label;
+            String title = launchTitle(target);
             items.add(new LaunchItem(title, target.guestPath, target.id, null));
         }
         recyclerView.setAdapter(new LaunchItemAdapter(items));
@@ -152,6 +152,28 @@ public class BoxLauncherFragment extends Fragment {
         boolean hasVisibleAction = desktopButton.getVisibility() == View.VISIBLE ||
                 downloadBattleNetButton.getVisibility() == View.VISIBLE;
         actionsView.setVisibility(hasVisibleAction ? View.VISIBLE : View.GONE);
+    }
+
+    private String launchTitle(BoxSpec.Target target) {
+        String label = target.label == null || target.label.isEmpty() ? target.id : target.label;
+        switch (label) {
+            case "Install Battle.net":
+                return getString(R.string.launch_install_battlenet);
+            case "Platform probe (normal)":
+                return getString(R.string.launch_probe_normal);
+            case "Platform probe (Agent.exe)":
+                return getString(R.string.launch_probe_agent);
+            case "Platform probe (AgentHelper.exe)":
+                return getString(R.string.launch_probe_agent_helper);
+            case "Register 32-bit WIC":
+                return getString(R.string.launch_register_wic);
+            case "NtReadFile file-view relocation probe":
+                return getString(R.string.launch_ntreadfile_probe);
+            case "Reconcile prefix with current Wine":
+                return getString(R.string.launch_reconcile_prefix);
+            default:
+                return label;
+        }
     }
 
     private void openBattleNetDownloadPage() {

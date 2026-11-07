@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="screen_size_entries">
+        <item>自定义</item>
+        <item>640x480 (4:3)</item>
+        <item>800x600 (4:3)</item>
+        <item>854x480 (16:9)</item>
+        <item>960x544 (16:9)</item>
+        <item>1024x768 (4:3)</item>
+        <item>1280x720 (16:9)</item>
+        <item>1280x800 (16:10)</item>
+        <item>1280x1024 (5:4)</item>
+        <item>1366x768 (16:9)</item>
+        <item>1440x900 (16:10)</item>
+        <item>1600x900 (16:9)</item>
+        <item>1920x1080 (16:9)</item>
+    </string-array>
+    <string-array name="graphics_driver_entries">
+        <item>Wrapper (Adreno 驱动)</item>
+        <item>VirGL (通用)</item>
+    </string-array>
+    <string-array name="binding_type_entries">
+        <item>键盘</item>
+        <item>鼠标</item>
+        <item>手柄</item>
+    </string-array>
+    <string-array name="dxvk_version_entries">
+        <item>2.3.1-arm64ec-gplasync (默认)</item>
+        <item>2.3.1</item>
+    </string-array>
+    <string-array name="dxvk_max_device_memory_entries">
+        <item>0 (默认)</item>
+        <item>512 MB</item>
+        <item>1024 MB</item>
+        <item>2048 MB</item>
+        <item>4096 MB</item>
+    </string-array>
+    <string-array name="dxvk_framerate_entries">
+        <item>0 (默认)</item>
+        <item>30</item>
+        <item>60</item>
+        <item>120</item>
+    </string-array>
+    <string-array name="wincomponent_entries">
+        <item>内置 (Wine)</item>
+        <item>原生 (Windows)</item>
+    </string-array>
+    <string-array name="box86_version_entries">
+        <item>0.3.2 (默认)</item>
+        <item>0.3.7</item>
+    </string-array>
+    <string-array name="box64_version_entries">
+        <item>0.3.6 (默认)</item>
+        <item>0.4.0</item>
+    </string-array>
+    <string-array name="fexcore_version_entries">
+        <item>2508 (默认)</item>
+    </string-array>
+    <string-array name="dinput_mapper_type_entries">
+        <item>标准（旧手柄）</item>
+        <item>XInput</item>
+    </string-array>
+    <string-array name="desktop_theme_entries">
+        <item>浅色</item>
+        <item>深色</item>
+    </string-array>
+    <string-array name="desktop_background_type_entries">
+        <item>图片</item>
+        <item>纯色</item>
+    </string-array>
+    <string-array name="startup_selection_entries">
+        <item>正常（加载全部服务）</item>
+        <item>精简（仅加载必要服务）</item>
+        <item>激进（启动时停止服务）</item>
+    </string-array>
+    <string-array name="frame_generation_multiplier_entries">
+        <item>2 倍</item>
+        <item>3 倍</item>
+        <item>4 倍</item>
+    </string-array>
+    <string-array name="wine_debug_profile_entries">
+        <item>关闭</item>
+        <item>基线</item>
+        <item>初始化状态</item>
+        <item>深度诊断</item>
+        <item>自定义通道</item>
+    </string-array>
+</resources>

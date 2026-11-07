@@ -265,6 +265,35 @@ public class SettingsFragment extends Fragment {
         return 0.25f + (sbFrameGenerationFlowScale.getProgress() / 100.0f);
     }
 
+    private String frameGenerationReason(String reason) {
+        if (reason == null || reason.isEmpty()) return "";
+        switch (reason) {
+            case "dll_missing":
+                return getString(R.string.frame_generation_reason_dll_missing);
+            case "dll_size_invalid":
+                return getString(R.string.frame_generation_reason_dll_size_invalid);
+            case "not_pe":
+                return getString(R.string.frame_generation_reason_not_pe);
+            case "pe_signature_invalid":
+                return getString(R.string.frame_generation_reason_pe_signature_invalid);
+            case "pe_optional_header_short":
+                return getString(R.string.frame_generation_reason_pe_header_short);
+            case "resource_directory_missing":
+                return getString(R.string.frame_generation_reason_resource_directory_missing);
+            case "rcdata_directory_missing":
+                return getString(R.string.frame_generation_reason_rcdata_missing);
+            case "required_shader_resources_missing":
+                return getString(R.string.frame_generation_reason_shaders_missing);
+            default:
+                if (reason.startsWith("dll_parse_error:")) {
+                    return getString(
+                            R.string.frame_generation_reason_parse_error,
+                            reason.substring("dll_parse_error:".length()));
+                }
+                return reason;
+        }
+    }
+
     private void refreshFrameGenerationStatus() {
         if (tvFrameGenerationStatus == null || frameGenerationManager == null) return;
         LosslessDllValidator.Validation validation =
@@ -275,14 +304,14 @@ public class SettingsFragment extends Fragment {
                     : validation.sha256;
             tvFrameGenerationStatus.setText(getString(
                     R.string.frame_generation_dll_ready,
-                    validation.version.isEmpty() ? "compatible" : validation.version,
+                    validation.version.isEmpty() ? getString(R.string.frame_generation_compatible) : validation.version,
                     validation.size,
                     hashPrefix));
         }
         else {
             tvFrameGenerationStatus.setText(getString(
                     R.string.frame_generation_dll_not_ready,
-                    validation.reason));
+                    frameGenerationReason(validation.reason)));
         }
     }
 

@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 
 import com.winlator.box.TitanProfileHostKeyStore;
 import com.winlator.box.TitanProfileSyncConfig;
+import com.winlator.box.TitanProfileSyncText;
 import com.winlator.box.TitanProfileSyncManager;
 import com.winlator.contentdialog.ContentDialog;
 
@@ -114,7 +115,7 @@ public final class TitanProfileSyncFragment extends Fragment
         cancelButton.setVisibility(state.active ? View.VISIBLE : View.GONE);
         progressBar.setProgress(state.progress);
         progressBar.setVisibility(state.active || state.success ? View.VISIBLE : View.GONE);
-        statusView.setText(state.message);
+        statusView.setText(TitanProfileSyncText.localize(requireContext(), state.message));
         if (state.active) {
             requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
@@ -192,7 +193,7 @@ public final class TitanProfileSyncFragment extends Fragment
         trustView.setText(fingerprint.isEmpty()
                 ? getString(R.string.titan_profile_sync_host_untrusted)
                 : getString(R.string.titan_profile_sync_host_trusted, fingerprint));
-        lastSyncView.setText(manager.getLastSummary());
+        lastSyncView.setText(TitanProfileSyncText.localize(requireContext(), manager.getLastSummary()));
     }
 
     private void clearKeepScreenOn() {

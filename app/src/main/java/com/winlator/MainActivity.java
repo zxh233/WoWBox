@@ -269,18 +269,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             ((TextView)dialog.findViewById(R.id.TVAppVersion)).setText(getString(R.string.version)+" "+pInfo.versionName);
 
-            String creditsAndThirdPartyAppsHTML = String.join("<br />",
-                "Based on <a href=\"https://github.com/brunodev85/winlator\">Winlator</a> by BrunoSX — MIT License",
-                "Ubuntu RootFs (<a href=\"https://releases.ubuntu.com/focal\">Focal Fossa</a>)",
-                "Wine (<a href=\"https://www.winehq.org\">winehq.org</a>)",
-                "Box86/Box64 by <a href=\"https://github.com/ptitSeb\">ptitseb</a>",
-                "PRoot (<a href=\"https://proot-me.github.io\">proot-me.github.io</a>)",
-                "Mesa (Turnip/Zink/VirGL) (<a href=\"https://www.mesa3d.org\">mesa3d.org</a>)",
-                "JSch (<a href=\"https://github.com/mwiede/jsch\">github.com/mwiede/jsch</a>)",
-                "DXVK (<a href=\"https://github.com/doitsujin/dxvk\">github.com/doitsujin/dxvk</a>)",
-                "VKD3D (<a href=\"https://gitlab.winehq.org/wine/vkd3d\">gitlab.winehq.org/wine/vkd3d</a>)",
-                "D8VK (<a href=\"https://github.com/AlpyneDreams/d8vk\">github.com/AlpyneDreams/d8vk</a>)"
-            );
+            String creditsAndThirdPartyAppsHTML = getString(R.string.about_credits);
 
             TextView tvCreditsAndThirdPartyApps = dialog.findViewById(R.id.TVCreditsAndThirdPartyApps);
             tvCreditsAndThirdPartyApps.setText(Html.fromHtml(creditsAndThirdPartyAppsHTML, Html.FROM_HTML_MODE_LEGACY));

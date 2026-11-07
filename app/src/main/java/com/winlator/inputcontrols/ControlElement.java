@@ -1,5 +1,6 @@
 package com.winlator.inputcontrols;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -9,6 +10,7 @@ import android.graphics.Rect;
 
 import androidx.core.graphics.ColorUtils;
 
+import com.winlator.R;
 import com.winlator.core.CubicBezierInterpolator;
 import com.winlator.math.Mathf;
 import com.winlator.widget.InputControlsView;
@@ -31,21 +33,26 @@ public class ControlElement {
     public enum Type {
         BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD;
 
-        public static String[] names() {
-            Type[] types = values();
-            String[] names = new String[types.length];
-            for (int i = 0; i < types.length; i++) names[i] = types[i].name().replace("_", "-");
-            return names;
+        public static String[] names(Context context) {
+            return new String[] {
+                    context.getString(R.string.control_type_button),
+                    context.getString(R.string.control_type_d_pad),
+                    context.getString(R.string.control_type_range_button),
+                    context.getString(R.string.control_type_stick),
+                    context.getString(R.string.control_type_trackpad)
+            };
         }
     }
     public enum Shape {
         CIRCLE, RECT, ROUND_RECT, SQUARE;
 
-        public static String[] names() {
-            Shape[] shapes = values();
-            String[] names = new String[shapes.length];
-            for (int i = 0; i < shapes.length; i++) names[i] = shapes[i].name().replace("_", " ");
-            return names;
+        public static String[] names(Context context) {
+            return new String[] {
+                    context.getString(R.string.control_shape_circle),
+                    context.getString(R.string.control_shape_rect),
+                    context.getString(R.string.control_shape_round_rect),
+                    context.getString(R.string.control_shape_square)
+            };
         }
     }
     public enum Range {
@@ -56,11 +63,13 @@ public class ControlElement {
             this.max = (byte)max;
         }
 
-        public static String[] names() {
-            Range[] ranges = values();
-            String[] names = new String[ranges.length];
-            for (int i = 0; i < ranges.length; i++) names[i] = ranges[i].name().replace("_", " ");
-            return names;
+        public static String[] names(Context context) {
+            return new String[] {
+                    context.getString(R.string.control_range_a_to_z),
+                    context.getString(R.string.control_range_0_to_9),
+                    context.getString(R.string.control_range_f1_to_f12),
+                    context.getString(R.string.control_range_np0_to_np9)
+            };
         }
     }
     private final InputControlsView inputControlsView;
@@ -304,6 +313,8 @@ public class ControlElement {
         }
         else {
             Binding binding = getBindingAt(0);
+            String buttonLabel = binding.buttonLabel(inputControlsView.getContext());
+            if (buttonLabel != null) return buttonLabel;
             String text = binding.toString().replace("NUMPAD ", "NP").replace("BUTTON ", "");
             if (text.length() > 7) {
                 String[] parts = text.split(" ");

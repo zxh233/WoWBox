@@ -78,6 +78,49 @@ public class BoxLoadingFragment extends Fragment implements BoxInstallListener {
         }), this);
     }
 
+    private String localizeStage(String stage) {
+        if (stage == null) return "";
+        switch (stage) {
+            case "prepare": return getString(R.string.box_stage_prepare);
+            case "release-prepare": return getString(R.string.box_stage_release_prepare);
+            case "release-activate": return getString(R.string.box_stage_release_activate);
+            case "release-complete": return getString(R.string.box_stage_release_complete);
+            case "already-installed": return getString(R.string.box_stage_already_installed);
+            case "prefix-template": return getString(R.string.box_stage_prefix_template);
+            case "payload": return getString(R.string.box_stage_payload);
+            case "base-imagefs": return getString(R.string.box_stage_base_imagefs);
+            case "wine-runtime": return getString(R.string.box_stage_wine_runtime);
+            case "graphics-wrapper-stack": return getString(R.string.box_stage_graphics_wrapper);
+            case "input-bridge-stack": return getString(R.string.box_stage_input_bridge);
+            case "dx-wrapper-stack": return getString(R.string.box_stage_dx_wrapper);
+            case "gpu-driver-stack": return getString(R.string.box_stage_gpu_driver);
+            case "cpu-emu-stack": return getString(R.string.box_stage_cpu_emu);
+            case "payload-directory": return getString(R.string.box_stage_payload_directory);
+            case "payload-download": return getString(R.string.box_stage_payload_download);
+            case "payload-extract": return getString(R.string.box_stage_payload_extract);
+            case "frame-generation-stack": return getString(R.string.box_stage_frame_generation);
+            case "dry-run-complete": return getString(R.string.box_stage_dry_run_complete);
+            case "complete": return getString(R.string.box_stage_complete);
+            default: return stage;
+        }
+    }
+
+    private String localizeDetail(String detail) {
+        if (detail == null) return "";
+        switch (detail) {
+            case "Preparing box install": return getString(R.string.box_detail_preparing);
+            case "Verifying Wine and FEX assets": return getString(R.string.box_detail_verifying_runtime);
+            case "Updating verified runtime and prefix": return getString(R.string.box_detail_updating_runtime);
+            case "Runtime update complete": return getString(R.string.box_detail_runtime_update_complete);
+            case "recorded post-wineboot prefix identity": return getString(R.string.box_detail_recorded_prefix);
+            case "preserved existing imagefs": return getString(R.string.box_detail_preserved_imagefs);
+            case "imagefs ready": return getString(R.string.box_detail_imagefs_ready);
+            case "preserved existing prefix": return getString(R.string.box_detail_preserved_prefix);
+            case "preserved existing runtime": return getString(R.string.box_detail_preserved_runtime);
+            default: return detail;
+        }
+    }
+
     @Override
     public void onProgress(String stage, int overallProgress, int currentProgress, String detail) {
         if (!isAdded()) return;
@@ -85,8 +128,8 @@ public class BoxLoadingFragment extends Fragment implements BoxInstallListener {
             if (!isAdded()) return;
             overallProgressBar.setProgress(overallProgress);
             currentProgressBar.setProgress(currentProgress);
-            stageView.setText(stage);
-            detailView.setText(detail != null ? detail : "");
+            stageView.setText(localizeStage(stage));
+            detailView.setText(localizeDetail(detail));
         });
     }
 }
