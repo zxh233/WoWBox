@@ -32,6 +32,7 @@ import android.widget.Spinner;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
@@ -148,6 +149,9 @@ import java.util.concurrent.Executors;
     private ImageFs imageFs;
     private HUDLayer hudLayer;
     private FrameRating frameRating;
+    private SwitchCompat performanceHudSwitch;
+    private boolean suppressPerformanceHudCallback;
+    private long performanceHudSwitchChangedAt;
     private Runnable editInputControlsCallback;
     private Shortcut shortcut;
     private String graphicsDriver = Container.DEFAULT_GRAPHICS_DRIVER;
@@ -234,6 +238,7 @@ import java.util.concurrent.Executors;
         Menu menu = navigationView.getMenu();
         menu.findItem(R.id.main_menu_logs).setVisible(enableLogs);
         if (XrActivity.isSupported()) menu.findItem(R.id.main_menu_magnifier).setVisible(false);
+        bindPerformanceHudSwitch(menu);
         navigationView.setNavigationItemSelectedListener(this);
 
         imageFs = ImageFs.find(this);
@@ -555,6 +560,15 @@ import java.util.concurrent.Executors;
             case R.id.main_menu_toggle_fullscreen:
                 renderer.toggleFullscreen();
                 drawerLayout.closeDrawers();
+                break;
+            case R.id.main_menu_performance_hud:
+                if (performanceHudSwitch != null
+                        && SystemClock.uptimeMillis() - performanceHudSwitchChangedAt > 300L) {
+                    performanceHudSwitch.toggle();
+                }
+                else if (drawerLayout != null) {
+                    drawerLayout.closeDrawers();
+                }
                 break;
             case R.id.main_menu_task_manager:
                 (new TaskManagerDialog(this)).show();
@@ -1225,7 +1239,12 @@ import java.util.concurrent.Executors;
         inputControlsView.setVisibility(View.GONE);
         rootView.addView(inputControlsView);
 
-        setHostHudVisible(container != null && container.isShowFPS());
+        boolean showHud = container != null && container.isShowFPS();
+        NavigationView navigationView = findViewById(R.id.NavigationView);
+        MenuItem hudItem = navigationView.getMenu().findItem(R.id.main_menu_performance_hud);
+        if (hudItem != null) hudItem.setVisible(container != null);
+        syncPerformanceHudSwitch(showHud);
+        setHostHudVisible(showHud);
         setupResumeGate(rootView);
 
         if (shortcut != null) {
@@ -1686,6 +1705,33 @@ import java.util.concurrent.Executors;
         if (scheduleSecondPass && drawerLayout != null) {
             drawerLayout.postDelayed(() -> forceCloseImeSession(reason + ":second_pass", false), 100L);
         }
+    }
+
+    private void bindPerformanceHudSwitch(Menu menu) {
+        MenuItem item = menu.findItem(R.id.main_menu_performance_hud);
+        if (item == null || item.getActionView() == null) return;
+        performanceHudSwitch = item.getActionView().findViewById(R.id.SWPerformanceHud);
+        if (performanceHudSwitch == null) return;
+        performanceHudSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (suppressPerformanceHudCallback) return;
+            performanceHudSwitchChangedAt = SystemClock.uptimeMillis();
+            applyPerformanceHudVisible(isChecked);
+        });
+    }
+
+    private void syncPerformanceHudSwitch(boolean enabled) {
+        if (performanceHudSwitch == null || performanceHudSwitch.isChecked() == enabled) return;
+        suppressPerformanceHudCallback = true;
+        performanceHudSwitch.setChecked(enabled);
+        suppressPerformanceHudCallback = false;
+    }
+
+    private void applyPerformanceHudVisible(boolean enabled) {
+        if (container != null && boxRuntime != null && container.isShowFPS() != enabled) {
+            boxRuntime.setHudEnabled(container, enabled);
+        }
+        setHostHudVisible(enabled);
+        if (drawerLayout != null) drawerLayout.closeDrawers();
     }
 
     private void setHostHudVisible(boolean visible) {

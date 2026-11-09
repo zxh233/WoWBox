@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu
-  xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <group android:checkableBehavior="none">
         <item android:icon="@drawable/icon_keyboard" android:id="@+id/main_menu_keyboard" android:title="@string/keyboard" />
         <item android:icon="@drawable/icon_input_controls" android:id="@+id/main_menu_input_controls" android:title="@string/input_controls" />
         <item android:icon="@drawable/icon_fullscreen" android:id="@+id/main_menu_toggle_fullscreen" android:title="@string/toggle_fullscreen" />
+        <item
+            android:id="@+id/main_menu_performance_hud"
+            android:icon="@drawable/icon_cpu"
+            android:title="@string/show_performance_hud"
+            app:actionLayout="@layout/menu_switch_performance_hud" />
         <item android:icon="@drawable/icon_task_manager" android:id="@+id/main_menu_task_manager" android:title="@string/task_manager" />
         <item android:icon="@drawable/icon_magnifier" android:id="@+id/main_menu_magnifier" android:title="@string/magnifier" />
         <item android:icon="@drawable/icon_debug" android:id="@+id/main_menu_logs" android:title="@string/logs" />
