@@ -20,7 +20,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ControlElement {
     public static final float STICK_DEAD_ZONE = 0.15f;
@@ -95,6 +97,19 @@ public class ControlElement {
     private RangeScroller scroller;
     private CubicBezierInterpolator interpolator;
     private Object touchTime;
+    private final TrackpadGesture trackpadGesture = new TrackpadGesture();
+    private final Runnable trackpadHoldRunnable = () ->
+            applyTrackpadEvents(trackpadGesture.holdTimeout(System.currentTimeMillis()));
+    private int trackpadSecondPointerId = -1;
+    private final ArrayList<Integer> trackpadExtraPointerIds = new ArrayList<>();
+    private float trackpadStartX;
+    private float trackpadStartY;
+    private float trackpadSecondStartX;
+    private float trackpadSecondStartY;
+    private PointF trackpadSecondPosition;
+    private int trackpadClickGeneration;
+    private boolean trackpadClickReleasePending;
+    private Binding trackpadClickBinding;
 
     public ControlElement(InputControlsView inputControlsView) {
         this.inputControlsView = inputControlsView;
@@ -623,6 +638,24 @@ public class ControlElement {
     }
 
     public boolean handleTouchDown(int pointerId, float x, float y) {
+        if (type == Type.TRACKPAD && currentPointerId != -1 && pointerId != currentPointerId && containsPoint(x, y)) {
+            if (pointerId != trackpadSecondPointerId && !isTrackpadExtraPointer(pointerId)) {
+                if (trackpadSecondPointerId == -1) {
+                    List<TrackpadGesture.Action> actions = trackpadGesture.secondFingerDown(System.currentTimeMillis());
+                    if (trackpadGesture.attachedSecondFinger()) {
+                        trackpadSecondPointerId = pointerId;
+                        trackpadSecondStartX = x;
+                        trackpadSecondStartY = y;
+                        if (trackpadSecondPosition == null) trackpadSecondPosition = new PointF();
+                        trackpadSecondPosition.set(x, y);
+                        applyTrackpadEvents(actions);
+                    }
+                    else trackpadExtraPointerIds.add(pointerId);
+                }
+                else trackpadExtraPointerIds.add(pointerId);
+            }
+            return true;
+        }
         if (currentPointerId == -1 && containsPoint(x, y)) {
             currentPointerId = pointerId;
             if (type == Type.BUTTON) {
@@ -635,10 +668,7 @@ public class ControlElement {
                 return true;
             }
             else {
-                if (type == Type.TRACKPAD) {
-                    if (currentPosition == null) currentPosition = new PointF();
-                    currentPosition.set(x, y);
-                }
+                if (type == Type.TRACKPAD) beginTrackpadTouch(x, y);
                 return handleTouchMove(pointerId, x, y);
             }
         }
@@ -646,6 +676,11 @@ public class ControlElement {
     }
 
     public boolean handleTouchMove(int pointerId, float x, float y) {
+        if (type == Type.TRACKPAD && pointerId == trackpadSecondPointerId) {
+            updateTrackpadSecondFinger(x, y);
+            return true;
+        }
+        if (type == Type.TRACKPAD && isTrackpadExtraPointer(pointerId)) return true;
         if (pointerId == currentPointerId && type == Type.BUTTON) return true;
         if (pointerId == currentPointerId && (type == Type.D_PAD || type == Type.STICK || type == Type.TRACKPAD)) {
             float deltaX, deltaY;
@@ -659,6 +694,9 @@ public class ControlElement {
                 deltaX = deltaPoint[0];
                 deltaY = deltaPoint[1];
                 currentPosition.set(x, y);
+                applyTrackpadEvents(trackpadGesture.moveTo(
+                        trackpadTravelFrom(trackpadStartX, trackpadStartY, x, y),
+                        System.currentTimeMillis()));
             }
             else {
                 float localX = x - boundingBox.left;
@@ -755,6 +793,10 @@ public class ControlElement {
     }
 
     public boolean handleTouchUp(int pointerId) {
+        if (type == Type.TRACKPAD && removeTrackpadExtraPointer(pointerId)) return true;
+        if (type == Type.TRACKPAD && (pointerId == currentPointerId || pointerId == trackpadSecondPointerId)) {
+            return handleTrackpadPointerUp(pointerId);
+        }
         if (pointerId == currentPointerId) {
             if (type == Type.BUTTON) {
                 Binding binding = getBindingAt(0);
@@ -771,7 +813,7 @@ public class ControlElement {
                     inputControlsView.invalidate();
                 }
             }
-            else if (type == Type.RANGE_BUTTON || type == Type.D_PAD || type == Type.STICK || type == Type.TRACKPAD) {
+            else if (type == Type.RANGE_BUTTON || type == Type.D_PAD || type == Type.STICK) {
                 for (byte i = 0; i < states.length; i++) {
                     if (states[i]) inputControlsView.handleInputEvent(getBindingAt(i), false);
                     states[i] = false;
@@ -792,8 +834,149 @@ public class ControlElement {
         return false;
     }
 
+    private void beginTrackpadTouch(float x, float y) {
+        if (currentPosition == null) currentPosition = new PointF();
+        currentPosition.set(x, y);
+        trackpadStartX = x;
+        trackpadStartY = y;
+        trackpadSecondPointerId = -1;
+        trackpadSecondPosition = null;
+        trackpadExtraPointerIds.clear();
+        trackpadGesture.primaryDown(System.currentTimeMillis());
+        inputControlsView.removeCallbacks(trackpadHoldRunnable);
+        inputControlsView.postDelayed(trackpadHoldRunnable, TrackpadGesture.HOLD_MILLISECONDS);
+    }
+
+    private void updateTrackpadSecondFinger(float x, float y) {
+        if (trackpadSecondPosition == null) trackpadSecondPosition = new PointF();
+        trackpadSecondPosition.set(x, y);
+        applyTrackpadEvents(trackpadGesture.moveTo(
+                trackpadTravelFrom(trackpadSecondStartX, trackpadSecondStartY, x, y),
+                System.currentTimeMillis()));
+    }
+
+    private float trackpadTravelFrom(float startX, float startY, float x, float y) {
+        TouchpadView touchpadView = inputControlsView.getTouchpadView();
+        if (touchpadView == null) return (float) Math.hypot(x - startX, y - startY);
+        float[] delta = touchpadView.computeDeltaPoint(startX, startY, x, y);
+        return (float) Math.hypot(delta[0], delta[1]);
+    }
+
+    private boolean handleTrackpadPointerUp(int pointerId) {
+        boolean primaryLifted = pointerId == currentPointerId;
+        int survivingSecond = trackpadSecondPointerId;
+        if (pointerId == trackpadSecondPointerId) trackpadSecondPointerId = -1;
+        inputControlsView.removeCallbacks(trackpadHoldRunnable);
+        applyTrackpadEvents(trackpadGesture.pointerUp());
+
+        if (primaryLifted && survivingSecond != -1 && pointerId != survivingSecond && trackpadGesture.hasContact()) {
+            currentPointerId = survivingSecond;
+            trackpadSecondPointerId = -1;
+            if (currentPosition == null) currentPosition = new PointF();
+            if (trackpadSecondPosition != null) currentPosition.set(trackpadSecondPosition);
+            return true;
+        }
+
+        if (!trackpadGesture.hasContact()) {
+            for (byte i = 0; i < states.length; i++) {
+                if (states[i]) inputControlsView.handleInputEvent(getBindingAt(i), false);
+                states[i] = false;
+            }
+            currentPointerId = -1;
+            currentPosition = null;
+            trackpadSecondPointerId = -1;
+            trackpadSecondPosition = null;
+            trackpadExtraPointerIds.clear();
+        }
+        return true;
+    }
+
+    private boolean isTrackpadExtraPointer(int pointerId) {
+        for (int i = 0; i < trackpadExtraPointerIds.size(); i++) {
+            if (trackpadExtraPointerIds.get(i) == pointerId) return true;
+        }
+        return false;
+    }
+
+    private boolean removeTrackpadExtraPointer(int pointerId) {
+        for (int i = 0; i < trackpadExtraPointerIds.size(); i++) {
+            if (trackpadExtraPointerIds.get(i) == pointerId) {
+                trackpadExtraPointerIds.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void applyTrackpadEvents(List<TrackpadGesture.Action> actions) {
+        for (int i = 0; i < actions.size(); i++) {
+            switch (actions.get(i)) {
+                case PRESS_LEFT:
+                    pressTrackpadButton(Binding.MOUSE_LEFT_BUTTON);
+                    break;
+                case RELEASE_LEFT:
+                    releaseTrackpadButton(Binding.MOUSE_LEFT_BUTTON);
+                    break;
+                case CLICK_LEFT:
+                    clickTrackpadButton(Binding.MOUSE_LEFT_BUTTON);
+                    break;
+                case PRESS_RIGHT:
+                    pressTrackpadButton(Binding.MOUSE_RIGHT_BUTTON);
+                    break;
+                case RELEASE_RIGHT:
+                    releaseTrackpadButton(Binding.MOUSE_RIGHT_BUTTON);
+                    break;
+                case CLICK_RIGHT:
+                    clickTrackpadButton(Binding.MOUSE_RIGHT_BUTTON);
+                    break;
+            }
+        }
+    }
+
+    private void pressTrackpadButton(Binding binding) {
+        trackpadClickGeneration++;
+        trackpadClickReleasePending = false;
+        trackpadClickBinding = null;
+        inputControlsView.handleInputEvent(binding, true);
+    }
+
+    private void releaseTrackpadButton(Binding binding) {
+        trackpadClickGeneration++;
+        trackpadClickReleasePending = false;
+        trackpadClickBinding = null;
+        inputControlsView.handleInputEvent(binding, false);
+    }
+
+    private void clickTrackpadButton(Binding binding) {
+        final int generation = ++trackpadClickGeneration;
+        trackpadClickReleasePending = true;
+        trackpadClickBinding = binding;
+        inputControlsView.handleInputEvent(binding, true);
+        inputControlsView.postDelayed(() -> {
+            if (generation != trackpadClickGeneration) return;
+            trackpadClickReleasePending = false;
+            trackpadClickBinding = null;
+            inputControlsView.handleInputEvent(binding, false);
+        }, TrackpadGesture.CLICK_RELEASE_DELAY_MS);
+    }
+
+    private void cancelPendingTrackpadClick() {
+        if (!trackpadClickReleasePending) return;
+        Binding binding = trackpadClickBinding;
+        trackpadClickGeneration++;
+        trackpadClickReleasePending = false;
+        trackpadClickBinding = null;
+        if (binding != null) inputControlsView.handleInputEvent(binding, false);
+    }
+
     /** Release ownership without turning a cancellation into a tap or toggle. */
     public void cancelTouch() {
+        applyTrackpadEvents(trackpadGesture.cancel());
+        cancelPendingTrackpadClick();
+        trackpadSecondPointerId = -1;
+        trackpadSecondPosition = null;
+        trackpadExtraPointerIds.clear();
+        inputControlsView.removeCallbacks(trackpadHoldRunnable);
         if (type == Type.BUTTON && (currentPointerId != -1 || selected || touchTime != null)) {
             inputControlsView.handleInputEvent(getBindingAt(0), false);
         }
