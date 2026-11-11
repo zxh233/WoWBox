@@ -325,6 +325,9 @@
     <string name="control_type_range_button">RANGE-BUTTON</string>
     <string name="control_type_stick">STICK</string>
     <string name="control_type_trackpad">TRACKPAD</string>
+    <string name="control_type_visibility">SHOW/HIDE</string>
+    <string name="control_visibility_shown">SHOW</string>
+    <string name="control_visibility_hidden">HIDE</string>
     <string name="control_shape_circle">CIRCLE</string>
     <string name="control_shape_rect">RECT</string>
     <string name="control_shape_round_rect">ROUND RECT</string>

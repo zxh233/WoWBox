@@ -94,10 +94,12 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             view.findViewById(R.id.LLCustomTextIcon).setVisibility(View.GONE);
             view.findViewById(R.id.LLRangeOptions).setVisibility(View.GONE);
 
-            if (type == ControlElement.Type.BUTTON) {
+            if (type == ControlElement.Type.BUTTON || type == ControlElement.Type.VISIBILITY) {
                 view.findViewById(R.id.LLShape).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.CBToggleSwitch).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.LLCustomTextIcon).setVisibility(View.VISIBLE);
+            }
+            if (type == ControlElement.Type.BUTTON) {
+                view.findViewById(R.id.CBToggleSwitch).setVisibility(View.VISIBLE);
             }
             else if (type == ControlElement.Type.RANGE_BUTTON) {
                 view.findViewById(R.id.LLRangeOptions).setVisibility(View.VISIBLE);

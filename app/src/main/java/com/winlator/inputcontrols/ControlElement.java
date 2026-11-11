@@ -32,9 +32,11 @@ public class ControlElement {
     public static final float TRACKPAD_MAX_SPEED = 20.0f;
     public static final byte TRACKPAD_ACCELERATION_THRESHOLD = 4;
     public static final short BUTTON_MIN_TIME_TO_KEEP_PRESSED = 300;
+    /** While pressed, other controls stay hidden. Release before this toggles them; release after shows them. */
+    public static final short VISIBILITY_HOLD_DELAY = 400;
     public static final int MAX_RANGE_BUTTON_COUNT = 12;
     public enum Type {
-        BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD;
+        BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD, VISIBILITY;
 
         public static String[] names(Context context) {
             return new String[] {
@@ -42,7 +44,8 @@ public class ControlElement {
                     context.getString(R.string.control_type_d_pad),
                     context.getString(R.string.control_type_range_button),
                     context.getString(R.string.control_type_stick),
-                    context.getString(R.string.control_type_trackpad)
+                    context.getString(R.string.control_type_trackpad),
+                    context.getString(R.string.control_type_visibility)
             };
         }
     }
@@ -97,6 +100,12 @@ public class ControlElement {
     private RangeScroller scroller;
     private CubicBezierInterpolator interpolator;
     private Object touchTime;
+    private boolean visibilityPressActive;
+    private boolean visibilityHoldActive;
+    private final Runnable visibilityHoldRunnable = () -> {
+        if (!visibilityPressActive || type != Type.VISIBILITY) return;
+        visibilityHoldActive = true;
+    };
     private final TrackpadGesture trackpadGesture = new TrackpadGesture();
     private final Runnable trackpadHoldRunnable = () ->
             applyTrackpadEvents(trackpadGesture.holdTimeout(System.currentTimeMillis()));
@@ -146,6 +155,7 @@ public class ControlElement {
     }
 
     public void setType(Type type) {
+        if (this.type == Type.VISIBILITY) endVisibilityPress(false);
         this.type = type;
         reset();
     }
@@ -294,6 +304,7 @@ public class ControlElement {
         int halfHeight = 0;
 
         switch (type) {
+            case VISIBILITY:
             case BUTTON:
                 switch (shape) {
                     case RECT:
@@ -346,6 +357,11 @@ public class ControlElement {
         if (text != null && !text.isEmpty()) {
             return text;
         }
+        if (type == Type.VISIBILITY) {
+            return inputControlsView.getContext().getString(inputControlsView.areOtherControlsConcealed()
+                    ? R.string.control_visibility_hidden
+                    : R.string.control_visibility_shown);
+        }
         else {
             Binding binding = getBindingAt(0);
             String buttonLabel = binding.buttonLabel(inputControlsView.getContext());
@@ -391,13 +407,15 @@ public class ControlElement {
         Paint paint = inputControlsView.getPaint();
         int primaryColor = inputControlsView.getPrimaryColor();
 
-        paint.setColor(selected ? inputControlsView.getSecondaryColor() : primaryColor);
+        boolean highlighted = selected || (type == Type.VISIBILITY && (visibilityPressActive || inputControlsView.areOtherControlsConcealed()));
+        paint.setColor(highlighted ? inputControlsView.getSecondaryColor() : primaryColor);
         paint.setStyle(Paint.Style.STROKE);
         float strokeWidth = snappingSize * 0.25f;
         paint.setStrokeWidth(strokeWidth);
         Rect boundingBox = getBoundingBox();
 
         switch (type) {
+            case VISIBILITY:
             case BUTTON: {
                 float cx = boundingBox.centerX();
                 float cy = boundingBox.centerY();
@@ -638,6 +656,7 @@ public class ControlElement {
     }
 
     public boolean handleTouchDown(int pointerId, float x, float y) {
+        if (isConcealedFromGameplay()) return false;
         if (type == Type.TRACKPAD && currentPointerId != -1 && pointerId != currentPointerId && containsPoint(x, y)) {
             if (pointerId != trackpadSecondPointerId && !isTrackpadExtraPointer(pointerId)) {
                 if (trackpadSecondPointerId == -1) {
@@ -658,6 +677,10 @@ public class ControlElement {
         }
         if (currentPointerId == -1 && containsPoint(x, y)) {
             currentPointerId = pointerId;
+            if (type == Type.VISIBILITY) {
+                beginVisibilityPress();
+                return true;
+            }
             if (type == Type.BUTTON) {
                 if (isKeepButtonPressedAfterMinTime()) touchTime = System.currentTimeMillis();
                 if (!toggleSwitch || !selected) inputControlsView.handleInputEvent(getBindingAt(0), true);
@@ -676,12 +699,13 @@ public class ControlElement {
     }
 
     public boolean handleTouchMove(int pointerId, float x, float y) {
+        if (isConcealedFromGameplay()) return false;
         if (type == Type.TRACKPAD && pointerId == trackpadSecondPointerId) {
             updateTrackpadSecondFinger(x, y);
             return true;
         }
         if (type == Type.TRACKPAD && isTrackpadExtraPointer(pointerId)) return true;
-        if (pointerId == currentPointerId && type == Type.BUTTON) return true;
+        if (pointerId == currentPointerId && (type == Type.BUTTON || type == Type.VISIBILITY)) return true;
         if (pointerId == currentPointerId && (type == Type.D_PAD || type == Type.STICK || type == Type.TRACKPAD)) {
             float deltaX, deltaY;
             Rect boundingBox = getBoundingBox();
@@ -812,6 +836,9 @@ public class ControlElement {
                     selected = !selected;
                     inputControlsView.invalidate();
                 }
+            }
+            else if (type == Type.VISIBILITY) {
+                endVisibilityPress(true);
             }
             else if (type == Type.RANGE_BUTTON || type == Type.D_PAD || type == Type.STICK) {
                 for (byte i = 0; i < states.length; i++) {
@@ -969,8 +996,43 @@ public class ControlElement {
         if (binding != null) inputControlsView.handleInputEvent(binding, false);
     }
 
+    private boolean isConcealedFromGameplay() {
+        return type != Type.VISIBILITY && inputControlsView.areOtherControlsConcealed();
+    }
+
+    private void beginVisibilityPress() {
+        visibilityPressActive = true;
+        visibilityHoldActive = false;
+        inputControlsView.setOtherControlsHeldHidden(true);
+        inputControlsView.removeCallbacks(visibilityHoldRunnable);
+        inputControlsView.postDelayed(visibilityHoldRunnable, VISIBILITY_HOLD_DELAY);
+        inputControlsView.invalidate();
+    }
+
+    private void endVisibilityPress(boolean commit) {
+        inputControlsView.removeCallbacks(visibilityHoldRunnable);
+        if (!visibilityPressActive) return;
+        boolean wasHold = visibilityHoldActive;
+        visibilityPressActive = false;
+        visibilityHoldActive = false;
+        inputControlsView.setOtherControlsHeldHidden(false);
+        if (!commit) {
+            inputControlsView.invalidate();
+            return;
+        }
+        if (wasHold) inputControlsView.setOtherControlsHidden(false);
+        else inputControlsView.toggleOtherControlsHidden();
+    }
+
+    /** Drop a finger that is still down. A latched toggle keeps its key. */
+    public void releaseConcealedTouch() {
+        if (currentPointerId == -1 && touchTime == null) return;
+        cancelTouch();
+    }
+
     /** Release ownership without turning a cancellation into a tap or toggle. */
     public void cancelTouch() {
+        if (type == Type.VISIBILITY) endVisibilityPress(false);
         applyTrackpadEvents(trackpadGesture.cancel());
         cancelPendingTrackpadClick();
         trackpadSecondPointerId = -1;

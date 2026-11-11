@@ -57,6 +57,8 @@ public class InputControlsView extends View {
     private Timer mouseMoveTimer;
     private final PointF mouseMoveOffset = new PointF();
     private boolean showTouchscreenControls = true;
+    private boolean otherControlsHidden = false;
+    private int otherControlsHoldCount = 0;
 
     public InputControlsView(Context context) {
         super(context);
@@ -99,7 +101,16 @@ public class InputControlsView extends View {
 
         if (profile != null) {
             if (!profile.isElementsLoaded()) profile.loadElements(this);
-            if (showTouchscreenControls) for (ControlElement element : profile.getElements()) element.draw(canvas);
+            if (showTouchscreenControls) {
+                boolean concealOthers = !editMode && areOtherControlsConcealed();
+                for (ControlElement element : profile.getElements()) {
+                    if (element.getType() == ControlElement.Type.VISIBILITY) continue;
+                    if (!concealOthers) element.draw(canvas);
+                }
+                for (ControlElement element : profile.getElements()) {
+                    if (element.getType() == ControlElement.Type.VISIBILITY) element.draw(canvas);
+                }
+            }
         }
 
         super.onDraw(canvas);
@@ -196,6 +207,8 @@ public class InputControlsView extends View {
 
     public void setProfile(ControlsProfile profile) {
         releaseAllControls();
+        otherControlsHidden = false;
+        otherControlsHoldCount = 0;
         if (profile != null) profile.prepareForUse();
         selectedElement = null;
         this.profile = profile;
@@ -210,6 +223,38 @@ public class InputControlsView extends View {
     public void setShowTouchscreenControls(boolean showTouchscreenControls) {
         if (this.showTouchscreenControls && !showTouchscreenControls) releaseAllControls();
         this.showTouchscreenControls = showTouchscreenControls;
+    }
+
+    public boolean areOtherControlsConcealed() {
+        return otherControlsHidden || otherControlsHoldCount > 0;
+    }
+
+    public void toggleOtherControlsHidden() {
+        setOtherControlsHidden(!otherControlsHidden);
+    }
+
+    public void setOtherControlsHidden(boolean hidden) {
+        if (otherControlsHidden == hidden) return;
+        boolean wasConcealed = areOtherControlsConcealed();
+        otherControlsHidden = hidden;
+        if (!wasConcealed && areOtherControlsConcealed()) releaseConcealedControls();
+        invalidate();
+    }
+
+    public void setOtherControlsHeldHidden(boolean held) {
+        boolean wasConcealed = areOtherControlsConcealed();
+        if (held) otherControlsHoldCount++;
+        else if (otherControlsHoldCount > 0) otherControlsHoldCount--;
+        else return;
+        if (!wasConcealed && areOtherControlsConcealed()) releaseConcealedControls();
+        invalidate();
+    }
+
+    private void releaseConcealedControls() {
+        if (profile == null) return;
+        for (ControlElement element : profile.getElements()) {
+            if (element.getType() != ControlElement.Type.VISIBILITY) element.releaseConcealedTouch();
+        }
     }
 
     @Override
@@ -410,9 +455,21 @@ public class InputControlsView extends View {
 
                     touchpadView.setPointerButtonLeftEnabled(true);
                     for (ControlElement element : profile.getElements()) {
-                        if (element.handleTouchDown(pointerId, x, y)) handled = true;
                         if (element.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON) {
                             touchpadView.setPointerButtonLeftEnabled(false);
+                        }
+                    }
+                    for (ControlElement element : profile.getElements()) {
+                        if (element.getType() != ControlElement.Type.VISIBILITY) continue;
+                        if (element.handleTouchDown(pointerId, x, y)) {
+                            handled = true;
+                            break;
+                        }
+                    }
+                    if (!handled) {
+                        for (ControlElement element : profile.getElements()) {
+                            if (element.getType() == ControlElement.Type.VISIBILITY) continue;
+                            if (element.handleTouchDown(pointerId, x, y)) handled = true;
                         }
                     }
                     if (!handled) touchpadView.onTouchEvent(event);

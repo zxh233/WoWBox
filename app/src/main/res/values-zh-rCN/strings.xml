@@ -325,6 +325,9 @@
     <string name="control_type_range_button">范围按钮</string>
     <string name="control_type_stick">摇杆</string>
     <string name="control_type_trackpad">触控板</string>
+    <string name="control_type_visibility">显隐按钮</string>
+    <string name="control_visibility_shown">显示</string>
+    <string name="control_visibility_hidden">隐藏</string>
     <string name="control_shape_circle">圆形</string>
     <string name="control_shape_rect">矩形</string>
     <string name="control_shape_round_rect">圆角矩形</string>
